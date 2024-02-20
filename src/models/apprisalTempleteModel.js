@@ -19,7 +19,6 @@ const appraisalTemplateSchema = new mongoose.Schema({
     {
       _id: {
         type: mongoose.Schema.Types.ObjectId,
-        default: mongoose.Types.ObjectId,
       },
       questionText: {
         type: String,
