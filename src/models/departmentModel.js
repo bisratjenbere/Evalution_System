@@ -1,9 +1,8 @@
 import mongoose from "mongoose";
 const departmentSchema = new mongoose.Schema({
   departmentHead: {
-    type: String,
-    required: true,
-    trim: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
   departmentName: {
     type: String,
