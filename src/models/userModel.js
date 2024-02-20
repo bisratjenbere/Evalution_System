@@ -83,5 +83,17 @@ userSchema.pre(/^find/, function (next) {
   next();
 });
 
+userSchema.methods.changedpassword = function (jwtTimesStamp) {
+  if (this.passwordChangeAt) {
+    const changedTimeStamp = parseInt(
+      this.passwordChangeAt.getTime() / 1000,
+      10
+    );
+
+    return jwtTimesStamp < changedTimeStamp;
+  }
+
+  return false;
+};
 const User = mongoose.model("User", userSchema);
 export default User;
