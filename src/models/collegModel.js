@@ -8,7 +8,6 @@ const collegeSchema = new mongoose.Schema({
   },
   collegeDean: {
     type: String,
-    required: true,
     trim: true,
   },
   collegeCode: {
