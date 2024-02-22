@@ -6,15 +6,15 @@ import collegeRouter from "../routes/collegeRoutes.js";
 import complaintRouter from "../routes/complaintRoutes.js";
 import apprisalTempleteRouter from "../routes/appraisalTemplateRoutes.js";
 import appraisalCycleRouter from "../routes/appraisalCycleRoutes.js";
-
+import { authenticateUser } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.use("/user", userRouter);
-router.use("/department", departmentRouter);
-router.use("/college", collegeRouter);
-router.use("/cycle", appraisalCycleRouter);
-router.use("/complaint", complaintRouter);
-router.use("/course", courseRouter);
-router.use("/templete", apprisalTempleteRouter);
+router.use("/department", authenticateUser, departmentRouter);
+router.use("/college", authenticateUser, collegeRouter);
+router.use("/cycle", authenticateUser, appraisalCycleRouter);
+router.use("/complaint", authenticateUser, complaintRouter);
+router.use("/course", authenticateUser, courseRouter);
+router.use("/templete", authenticateUser, apprisalTempleteRouter);
 
 export default router;
