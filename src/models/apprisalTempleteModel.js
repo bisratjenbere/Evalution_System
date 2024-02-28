@@ -15,12 +15,14 @@ const appraisalTemplateSchema = new mongoose.Schema({
       "peer-administrative-to-administrative",
     ],
     required: true,
+    unique: true,
     default: "self",
   },
   questions: [
     {
       _id: {
         type: mongoose.Schema.Types.ObjectId,
+        default: new mongoose.Types.ObjectId(),
       },
       questionText: {
         type: String,
@@ -35,7 +37,7 @@ const appraisalTemplateSchema = new mongoose.Schema({
     },
   ],
 });
-
+appraisalTemplateSchema.index({ evaluationType: 1 });
 const AppraisalTemplate = mongoose.model(
   "AppraisalTemplate",
   appraisalTemplateSchema
