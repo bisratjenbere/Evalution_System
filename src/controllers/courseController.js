@@ -29,11 +29,11 @@ export const getActiveCoursesForStudent = catchAsync(async (req, res, next) => {
   const allCourse = await Course.find({
     department: studentDepartment,
     batch: studentBatch,
-  }).populate("instructor", "_id");
+  }).populate({ path: "instructor" });
 
   const activeCourses = allCourse.filter((course) => course.isActive);
 
-  res.status(StatusCodes.OK).json({
+  return res.status(StatusCodes.OK).json({
     status: "success",
     courses: activeCourses,
   });
@@ -41,12 +41,12 @@ export const getActiveCoursesForStudent = catchAsync(async (req, res, next) => {
 
 export const getCoursesForDepartment = catchAsync(async (req, res, next) => {
   const department = req.user.department;
-  const departmentCourses = await Course.find({ department }).populate(
-    "instructor",
-    "_id"
-  );
+  const departmentCourses = await Course.find({ department }).populate([
+    { path: "instructor" },
+    { path: "department" },
+  ]);
   const activeCourses = departmentCourses.filter((course) => course.isActive);
-  res.status(StatusCodes.OK).json({
+  return res.status(StatusCodes.OK).json({
     status: "success",
     courses: activeCourses,
   });

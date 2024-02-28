@@ -11,7 +11,7 @@ export const getAllColleges = getAll(College);
 
 export const createCollege = createOne(College);
 
-export const getCollege = getOne(College, { path: "collegeDean" });
+export const getCollege = getOne(College);
 
 export const updateCollege = updateOne(College);
 

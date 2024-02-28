@@ -17,10 +17,13 @@ export const updateComplaint = updateOne(Complaint);
 export const getComplaintByUser = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
   const userComplaints = await Complaint.find({ userId });
+
   if (!userComplaints || userComplaints.length === 0)
-    return new AppError(
-      "No complaint is Found by Specified User ",
-      StatusCodes.NOT_FOUND
+    return next(
+      new AppError(
+        "No complaint is Found by Specified User ",
+        StatusCodes.NOT_FOUND
+      )
     );
   return res.status(StatusCodes.OK).json({
     status: "success",

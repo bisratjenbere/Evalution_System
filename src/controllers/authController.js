@@ -11,12 +11,23 @@ import { comparePassword, passwordResetToken } from "../utils/passwordUtils.js";
 import { createJwt, sendToken } from "../utils/tokenUtils.js";
 
 import { NODE_ENV } from "../config/environments.js";
+import Department from "../models/departmentModel.js";
 // import Email from "../utils/email.js";
 
 export const signup = catchAsync(async (req, res, next) => {
   const hashedPassword = await hashPassword(req.body.password);
   req.body.password = hashedPassword;
+
+  const currUserDepartment = await Department.findById(
+    req.body.department
+  ).populate({
+    path: "collegeId",
+  });
+
+  req.body.college = currUserDepartment.collegeId._id;
+
   const user = await User.create(req.body);
+
   res.status(StatusCodes.CREATED).json({ status: "sucess", data: user });
 });
 export const login = catchAsync(async (req, res, next) => {
