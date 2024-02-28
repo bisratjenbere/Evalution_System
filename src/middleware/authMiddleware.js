@@ -40,6 +40,7 @@ export const authenticateUser = catchAsync(async (req, res, next) => {
       )
     );
   }
+
   const decoded = await verifyJwt(token);
   const freshUser = await User.findById(decoded.payload);
   if (!freshUser) {
