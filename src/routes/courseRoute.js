@@ -9,14 +9,28 @@ import {
   getActiveCoursesForStudent,
   getCoursesForDepartment,
 } from "../controllers/courseController.js";
+import { authorizePermissions } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+router.get(
+  "/active-courses-for-student",
+  authorizePermissions("student"),
+  getActiveCoursesForStudent
+);
+router.get(
+  "/courses-for-department",
+  authorizePermissions("head"),
+  getCoursesForDepartment
+);
 
-router.route("/").get(getAllCourses).post(createCourse);
-
-router.route("/:id").get(getCourse).patch(updateCourse).delete(deleteCourse);
-
-router.get("/active-courses-for-student", getActiveCoursesForStudent);
-router.get("/courses-for-department", getCoursesForDepartment);
+router
+  .route("/")
+  .get(authorizePermissions("head"), getAllCourses)
+  .post(authorizePermissions("head"), createCourse);
+router
+  .route("/:id")
+  .get(getCourse)
+  .patch(authorizePermissions("head"), updateCourse)
+  .delete(authorizePermissions("head"), deleteCourse);
 
 export default router;

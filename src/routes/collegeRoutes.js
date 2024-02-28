@@ -7,11 +7,19 @@ import {
   updateCollege,
   deleteCollege,
 } from "../controllers/collegeController.js";
+import { authorizePermissions } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route("/").get(getAllColleges).post(createCollege);
+router
+  .route("/")
+  .get(getAllColleges)
+  .post(authorizePermissions("admin"), createCollege);
 
-router.route("/:id").get(getCollege).patch(updateCollege).delete(deleteCollege);
+router
+  .route("/:id")
+  .get(getCollege)
+  .patch(authorizePermissions("admin"), updateCollege)
+  .delete(deleteCollege);
 
 export default router;

@@ -6,15 +6,19 @@ import {
   getDepartment,
   getAllDepartment,
 } from "../controllers/departmentController.js";
+import { authorizePermissions } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route("/").get(getAllDepartment).post(createDepartment);
+router
+  .route("/")
+  .get(getAllDepartment)
+  .post(authorizePermissions("admin"), createDepartment);
 
 router
   .route("/:id")
   .get(getDepartment)
-  .patch(updateDepartment)
-  .delete(deleteDepartment);
+  .patch(authorizePermissions("admin"), updateDepartment)
+  .delete(authorizePermissions("admin"), deleteDepartment);
 
 export default router;
