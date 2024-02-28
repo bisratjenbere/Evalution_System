@@ -9,12 +9,12 @@ import appraisalCycleRouter from "../routes/appraisalCycleRoutes.js";
 import { authenticateUser } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
-router.use("/user", userRouter);
-router.use("/department", authenticateUser, departmentRouter);
-router.use("/college", authenticateUser, collegeRouter);
-router.use("/cycle", authenticateUser, appraisalCycleRouter);
-router.use("/complaint", authenticateUser, complaintRouter);
-router.use("/course", authenticateUser, courseRouter);
-router.use("/templete", authenticateUser, apprisalTempleteRouter);
+router.use("/users", userRouter);
+router.use("/departments", authenticateUser, departmentRouter);
+router.use("/colleges", authenticateUser, collegeRouter);
+router.use("/cycles", authenticateUser, appraisalCycleRouter);
+router.use("/complaints", authenticateUser, complaintRouter);
+router.use("/courses", authenticateUser, courseRouter);
+router.use("/templetes", authenticateUser, apprisalTempleteRouter);
 
 export default router;
