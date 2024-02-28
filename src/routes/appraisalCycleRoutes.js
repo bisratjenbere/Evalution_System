@@ -12,7 +12,7 @@ import {
 import { authorizePermissions } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-
+router.route("/active").get(getActiveApprisalCycle);
 router
   .route("/")
   .get(getAllAppraisalCycles)
@@ -22,6 +22,5 @@ router
   .get(getAppraisalCycle)
   .patch(updateAppraisalCycle)
   .delete(deleteAppraisalCycle);
-router.route("/active").get(getActiveApprisalCycle);
 
 export default router;

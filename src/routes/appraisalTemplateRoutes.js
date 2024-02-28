@@ -6,15 +6,19 @@ import {
   updateAppraisalTemplate,
   deleteAppraisalTemplate,
 } from "../controllers/appraisalTemplateController.js";
+import { authorizePermissions } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route("/").get(getAllAppraisalTemplates).post(createAppraisalTemplate);
+router
+  .route("/")
+  .get(getAllAppraisalTemplates)
+  .post(authorizePermissions("hr"), createAppraisalTemplate);
 
 router
   .route("/:id")
   .get(getAppraisalTemplate)
-  .patch(updateAppraisalTemplate)
-  .delete(deleteAppraisalTemplate);
+  .patch(authorizePermissions("hr"), updateAppraisalTemplate)
+  .delete(authorizePermissions("hr"), deleteAppraisalTemplate);
 
 export default router;
