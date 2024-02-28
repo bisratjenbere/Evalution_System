@@ -6,10 +6,6 @@ const collegeSchema = new mongoose.Schema({
     trim: true,
     unique: true,
   },
-  collegeDean: {
-    type: String,
-    trim: true,
-  },
   collegeCode: {
     type: String,
     trim: true,

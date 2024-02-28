@@ -5,10 +5,12 @@ const appraisalTemplateSchema = new mongoose.Schema({
     enum: [
       "student-to-instructor",
       "head-to-instructor",
-      "team-leader-to-empoyee",
+      "head-to-other-employee",
+      "team-leader-to-employee",
       "dean-to-head",
       "director-to-team-leader",
       "self",
+      "peer-instructor-to-instructor",
       "peer-academic-to-academic",
       "peer-administrative-to-administrative",
     ],
@@ -24,7 +26,7 @@ const appraisalTemplateSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
-      rating: {
+      weight: {
         type: Number,
         required: true,
         min: 1,

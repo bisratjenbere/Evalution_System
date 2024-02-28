@@ -37,17 +37,19 @@ const userSchema = new mongoose.Schema({
       "student",
       "adminstrative",
       "acadamic",
+      "instructor",
+      "assistance",
       "admin",
       "director",
       "teamLeader",
       "head",
       "dean",
+      "hr",
     ],
     default: "acadamic",
   },
   batch: {
     type: Number,
-    required: true,
     min: 1,
   },
 
@@ -55,10 +57,14 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Department",
   },
+  college: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "College",
+  },
 
   password: {
     type: String,
-    required: [true, "Please provide a password"],
+
     minlength: 8,
     select: false,
   },
@@ -71,6 +77,10 @@ const userSchema = new mongoose.Schema({
     select: false,
   },
 });
+
+userSchema.index({ department: 1 });
+userSchema.index({ college: 1 });
+userSchema.index({ email: 1 });
 
 userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();

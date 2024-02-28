@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const evaluationResultSchema = new mongoose.Schema({
   evaluatedUserId: {
     type: mongoose.Schema.Types.ObjectId,

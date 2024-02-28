@@ -10,10 +10,7 @@ const courseSchema = new mongoose.Schema(
     code: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
-      uppercase: true,
-      match: /^[A-Za-z0-9]+$/,
     },
     semester: {
       type: Number,
@@ -57,11 +54,21 @@ const courseSchema = new mongoose.Schema(
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-courseSchema.index({ department: 1, instructor: 1 });
+courseSchema.index({ code: 1, batch: 1 }, { unique: true });
+courseSchema.index({ department: 1, instructor: 1, batch: 1 });
 courseSchema.virtual("isActive").get(function () {
   const currentDate = new Date();
   return this.startDate <= currentDate && this.endDate >= currentDate;
 });
 const Course = mongoose.model("Course", courseSchema);
+courseSchema.path("batch").validate(async function (value) {
+  const count = await mongoose.models.Course.countDocuments({
+    _id: { $ne: this._id },
+    batch: this.batch,
+    code: this.code,
+    department: this.department,
+  });
 
+  return !count;
+});
 export default Course;
