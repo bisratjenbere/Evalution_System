@@ -1,0 +1,48 @@
+import buildEvaluationQuery from "./buildQuery.js";
+import AppError from "../appError.js";
+import { StatusCodes } from "http-status-codes";
+import getActiveCycle from "./getActiveCycle.js";
+import EvaluationResult from "../../models/apprisalResultModel.js";
+async function performCommonChecks(req, next, evalType, callback) {
+  try {
+    const activeCycle = await getActiveCycle();
+    const startDate = activeCycle.startDate;
+    const endDate = activeCycle.endDate;
+    const today = new Date();
+
+    if (!(today > startDate && today < endDate)) {
+      return next(
+        new AppError(
+          "Sorry, You are not allowed to give evaluation. Try again when the evaluation starts on",
+          StatusCodes.FORBIDDEN
+        )
+      );
+    }
+
+    const query = await buildEvaluationQuery(req, evalType, activeCycle);
+
+    const evaluatedUser = await EvaluationResult.findOne(query);
+
+    if (evaluatedUser) {
+      return next(
+        new AppError(
+          `You've already evaluated ${
+            evalType === "student" ? "Instructor " : ` ${evalType}`
+          } during this cycle.`,
+          StatusCodes.FORBIDDEN
+        )
+      );
+    }
+
+    return callback(req, activeCycle);
+  } catch (error) {
+    return next(
+      new AppError(
+        "Error checking evaluation availability",
+        StatusCodes.INTERNAL_SERVER_ERROR
+      )
+    );
+  }
+}
+
+export default performCommonChecks;
