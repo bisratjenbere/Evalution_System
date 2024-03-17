@@ -5,10 +5,13 @@ async function determineEvaluatedUserId(req, evalType, activeCycle) {
   switch (evalType) {
     case "student":
       const course = await getUserModel(req, "student");
+
       if (!course) {
         throw new Error("Student not found for evaluation");
       }
+
       evaluatedUserId = course.instructor._id;
+
       break;
     case "self":
       evaluatedUserId = req.user._id;
@@ -20,6 +23,7 @@ async function determineEvaluatedUserId(req, evalType, activeCycle) {
   return {
     evaluatedUserId,
     evaluter: req.user._id,
+    evaluterRole: evalType,
     cycle: activeCycle._id,
     course:
       evalType === "student"

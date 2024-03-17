@@ -21,14 +21,14 @@ async function performCommonChecks(req, next, evalType, callback) {
 
     const query = await buildEvaluationQuery(req, evalType, activeCycle);
 
-    const evaluatedUser = await EvaluationResult.findOne(query);
+    const evaluatedUser = await EvaluationResult.findOne(query).populate({
+      path: "evaluatedUserId",
+    });
 
     if (evaluatedUser) {
       return next(
         new AppError(
-          `You've already evaluated ${
-            evalType === "student" ? "Instructor " : ` ${evalType}`
-          } during this cycle.`,
+          `You've already evaluated ${evaluatedUser["evaluatedUserId"].firstName} ${evaluatedUser["evaluatedUserId"].lastName}  during this cycle.`,
           StatusCodes.FORBIDDEN
         )
       );
