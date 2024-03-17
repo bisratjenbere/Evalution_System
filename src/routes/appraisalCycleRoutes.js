@@ -16,7 +16,7 @@ router.route("/active").get(getActiveApprisalCycle);
 router
   .route("/")
   .get(getAllAppraisalCycles)
-  .post(authorizePermissions("hr"), createAppraisalCycle);
+  .post(authorizePermissions("hr", "head"), createAppraisalCycle);
 router
   .route("/:id")
   .get(getAppraisalCycle)

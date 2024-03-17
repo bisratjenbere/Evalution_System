@@ -7,8 +7,12 @@ import {
   getAllDepartment,
 } from "../controllers/departmentController.js";
 import { authorizePermissions } from "../middleware/authMiddleware.js";
-
+import {
+  reviewByStudent,
+  reviewBySelf,
+} from "../controllers/reviewController.js";
 const router = express.Router();
+router.post("/review/:id", reviewByStudent);
 
 router
   .route("/")

@@ -23,6 +23,11 @@ const appraisalCycleSchema = new mongoose.Schema({
   },
 });
 appraisalCycleSchema.pre("save", async function (next) {
+  const currentDate = new Date();
+
+  if (currentDate >= this.startDate && currentDate <= this.endDate) {
+    this.status = "active";
+  }
   if (this.status === "active") {
     await this.constructor.updateMany(
       { status: "active", _id: { $ne: this._id } },

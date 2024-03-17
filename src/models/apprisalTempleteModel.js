@@ -10,13 +10,18 @@ const appraisalTemplateSchema = new mongoose.Schema({
       "dean-to-head",
       "director-to-team-leader",
       "self",
+
       "peer-instructor-to-instructor",
       "peer-academic-to-academic",
       "peer-administrative-to-administrative",
     ],
     required: true,
-    unique: true,
     default: "self",
+  },
+
+  language: {
+    type: String,
+    enum: ["Amhric", "English"],
   },
   questions: [
     {
@@ -28,6 +33,9 @@ const appraisalTemplateSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
+      catagory: {
+        type: String,
+      },
       weight: {
         type: Number,
         required: true,
@@ -37,7 +45,10 @@ const appraisalTemplateSchema = new mongoose.Schema({
     },
   ],
 });
-appraisalTemplateSchema.index({ evaluationType: 1 });
+appraisalTemplateSchema.index(
+  { evaluationType: 1, language: 1 },
+  { unique: true }
+);
 const AppraisalTemplate = mongoose.model(
   "AppraisalTemplate",
   appraisalTemplateSchema

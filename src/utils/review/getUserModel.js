@@ -10,6 +10,7 @@ async function getUserModel(req, evalType) {
         startDate: { $lt: new Date() },
         endDate: { $gt: new Date() },
       }).populate({ path: "instructor" });
+
       return evalutedCourse;
     case "self":
       return req.user;
