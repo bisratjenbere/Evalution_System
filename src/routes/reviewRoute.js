@@ -10,22 +10,67 @@ import {
 } from "../controllers/reviewController.js";
 
 import { authorizePermissions } from "../middleware/authMiddleware.js";
+
+import {
+  validateCourseId,
+  validateEvaluationInput,
+  validateIdParams,
+  ensureUserIsDepartmentHead,
+  ensureUserIsPeer,
+  ensureUserIsDepartmentMember,
+} from "../middleware/validationMiddleware/evalutionValidation.js";
 const evaluationRouter = express.Router();
-evaluationRouter.route("/self").post(reviewBySelf);
-evaluationRouter.route("/by-peer/:id").post(reviewByPeer);
+evaluationRouter.route("/self").post(validateEvaluationInput, reviewBySelf);
+evaluationRouter
+  .route("/by-peer/:id")
+  .post(
+    validateIdParams,
+    validateEvaluationInput,
+    ensureUserIsPeer,
+    reviewByPeer
+  );
 evaluationRouter
   .route("/by-head/:id")
-  .post(authorizePermissions("head"), reviewByHead);
+  .post(
+    authorizePermissions("head"),
+    validateIdParams,
+    ensureUserIsDepartmentMember,
+    validateEvaluationInput,
+    reviewByHead
+  );
 evaluationRouter
   .route("/by-dean/:id")
-  .post(authorizePermissions("dean"), reviewByDean);
+  .post(
+    authorizePermissions("dean"),
+    validateIdParams,
+    ensureUserIsDepartmentHead,
+    validateEvaluationInput,
+    reviewByDean
+  );
 evaluationRouter
   .route("/by-team-leader/:id")
-  .post(authorizePermissions("teamLeader"), reviewByTeamLeader);
+  .post(
+    authorizePermissions("teamLeader"),
+    validateIdParams,
+    ensureUserIsDepartmentMember,
+    validateEvaluationInput,
+    reviewByTeamLeader
+  );
 evaluationRouter
   .route("/director/:id")
-  .post(authorizePermissions("director"), reviewByDirector);
+  .post(
+    authorizePermissions("director"),
+    validateIdParams,
+    ensureUserIsDepartmentHead,
+    validateEvaluationInput,
+    reviewByDirector
+  );
 evaluationRouter
   .route("/student/:id")
-  .post(authorizePermissions("student"), reviewByStudent);
+  .post(
+    authorizePermissions("student"),
+    validateCourseId,
+    validateEvaluationInput,
+    reviewByStudent
+  );
 export default evaluationRouter;
