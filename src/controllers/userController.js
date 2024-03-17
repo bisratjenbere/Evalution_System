@@ -12,6 +12,7 @@ import {
   generateRandomPassword,
   hashPassword,
 } from "../utils/passwordUtils.js";
+import EvaluationResult from "../models/apprisalResultModel.js";
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -113,6 +114,29 @@ export const getEmployeeByDepartmentId = catchAsync(async (req, res, next) => {
 
   res.status(StatusCodes.OK).json({ status: "success", data: employee });
 });
+
+export const getUnEvalutedEmployeeByDepartmentId = catchAsync(
+  async (req, res, next) => {
+    const depId = req.params.id;
+    const employee = await User.find({
+      department: depId,
+      role: { $ne: "student" },
+    }).populate({ path: "department" });
+
+    if (!employee || employee.length === 0)
+      return new AppError("No Employee Found with this depId");
+
+    employee.filter(async (emp) => {
+      const result = await EvaluationResult.findOne({
+        evaluatedUserId: emp._id,
+        evaluter: req.user._id,
+      });
+    });
+
+    if (result.length)
+      res.status(StatusCodes.OK).json({ status: "success", data: employee });
+  }
+);
 export const deleteMe = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(req.user._id, { active: false });
 
