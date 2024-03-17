@@ -13,7 +13,7 @@ const router = express.Router();
 router
   .route("/")
   .get(getAllAppraisalTemplates)
-  .post(authorizePermissions("hr"), createAppraisalTemplate);
+  .post(authorizePermissions("hr", "student"), createAppraisalTemplate);
 
 router
   .route("/:id")
