@@ -7,6 +7,9 @@ import AppError from "../utils/appError.js";
 import * as factory from "./handleFactory.js";
 import { StatusCodes } from "http-status-codes";
 import XLSX from "xlsx";
+import { formatImage } from "../middleware/multerMiddleware.js";
+
+import cloudinary from "cloudinary";
 // import Email from "../utils/email.js";
 
 import {
@@ -52,12 +55,19 @@ export const updateMe = catchAsync(async (req, res, next) => {
     "batch"
   );
 
-  if (req.file) filteredBody.photo = req.file.filename;
-
   const updatedUser = await User.findByIdAndUpdate(req.user._id, filteredBody, {
     new: true,
     runValidators: true,
   });
+  if (req.file) {
+    if (req.file && updatedUser.avatarPublicId) {
+      await cloudinary.v2.uploader.destroy(updatedUser.avatarPublicId);
+    }
+    const file = formatImage(req.file);
+    const response = await cloudinary.v2.uploader.upload(file);
+    updatedUser.avatar = response.secure_url;
+    updatedUser.avatarPublicId = response.public_id;
+  }
 
   res.status(200).json({
     status: "success",
