@@ -10,7 +10,6 @@ const appraisalTemplateSchema = new mongoose.Schema({
       "dean-to-head",
       "director-to-team-leader",
       "self",
-
       "peer-instructor-to-instructor",
       "peer-academic-to-academic",
       "peer-administrative-to-administrative",
