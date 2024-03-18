@@ -6,6 +6,7 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 import * as factory from "./handleFactory.js";
 import { StatusCodes } from "http-status-codes";
+import XLSX from "xlsx";
 // import Email from "../utils/email.js";
 
 import {
@@ -174,8 +175,61 @@ export const assignRole = catchAsync(async (req, res, next) => {
       new AppError("There is No User Updated", StatusCodes.NOT_FOUND)
     );
   }
-
   // const emailInstance = new Email("credential sent");
   // await emailInstance.send();
   res.status(200).json({ message: "User updated and email sent successfully" });
 });
+
+const multerStorage = multer.memoryStorage();
+
+const upload = multer({
+  storage: multerStorage,
+});
+
+export const uploadMiddleware = upload.single("course");
+
+async function processEmployeeDataAndSave(data, req) {
+  try {
+    for (let row = 1; row < data.length; row++) {
+      const newEmployee = new User({
+        firstName: data[row][0],
+        lastName: data[row][1],
+        dateOfJoining: new Date(data[row][2]),
+        email: data[row][3],
+        salutation: data[row][4],
+        experience: parseInt(data[row][5]),
+        department: req.user.department,
+        college: req.user.college,
+      });
+
+      await newEmployee.save();
+    }
+
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
+export const uploadEmployee = async (req, res) => {
+  try {
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    const success = await processEmployeeDataAndSave(data, req);
+
+    if (success) {
+      return res.json({
+        status: "sucess",
+        msg: "Employee successfully saved.",
+      });
+    } else {
+      return res.json({ status: "failed", msg: "Error processing data." });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.json({ status: "failed", msg: "Error uploading file." });
+  }
+};

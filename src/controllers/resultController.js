@@ -187,7 +187,7 @@ export const getAllEvalutinResult = catchAsync(async (req, res, next) => {
   const activeCycle = await getActiveCycle();
   const evaluationResults = await FinalResult.find({
     cycle: activeCycle,
-  }).populate("evaluatedUserName");
+  });
 
   if (!evaluationResults || evaluationResults.length === 0) {
     return res
@@ -225,7 +225,13 @@ export const getTeamLeaderEvalution = catchAsync(async (req, res, next) => {
       .json({ message: "No evaluation results found" });
   }
 
-  res.status(StatusCodes.OK).json({ data: evaluationResults });
+  const filteredEvalution = evaluationResults.filter((curr, index) => {
+    return (
+      curr.evaluatedUserName.college === req.user.college &&
+      curr.evaluatedUserName.role === "teamLeader"
+    );
+  });
+  res.status(StatusCodes.OK).json({ data: filteredEvalution });
 });
 
 export const getHeadEvalution = catchAsync(async (req, res, next) => {
@@ -233,4 +239,18 @@ export const getHeadEvalution = catchAsync(async (req, res, next) => {
   const evaluationResults = await FinalResult.find({
     cycle: activeCycle,
   }).populate("evaluatedUserName");
+
+  if (!evaluationResults || evaluationResults.length === 0) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json({ message: "No evaluation results found" });
+  }
+
+  const filteredEvalution = evaluationResults.filter((curr, index) => {
+    return (
+      curr.evaluatedUserName.college === req.user.college &&
+      curr.evaluatedUserName.role === "head"
+    );
+  });
+  res.status(StatusCodes.OK).json({ data: filteredEvalution });
 });

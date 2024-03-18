@@ -8,7 +8,10 @@ import {
   deleteCourse,
   getActiveCoursesForStudent,
   getCoursesForDepartment,
+  uploadCourse,
 } from "../controllers/courseController.js";
+
+import { uploadMiddleware } from "../controllers/userController.js";
 import { authorizePermissions } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -17,6 +20,8 @@ router.get(
   authorizePermissions("student"),
   getActiveCoursesForStudent
 );
+
+router.post("/upload", uploadMiddleware, uploadCourse);
 router.get(
   "/courses-for-department",
   authorizePermissions("head"),
@@ -26,7 +31,7 @@ router.get(
 router
   .route("/")
   .get(authorizePermissions("head"), getAllCourses)
-  .post(authorizePermissions("head"), createCourse);
+  .post(authorizePermissions("head", "student"), createCourse);
 router
   .route("/:id")
   .get(getCourse)
