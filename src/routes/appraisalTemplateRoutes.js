@@ -5,7 +5,10 @@ import {
   getAppraisalTemplate,
   updateAppraisalTemplate,
   deleteAppraisalTemplate,
+  importAppraisalTemplate,
 } from "../controllers/appraisalTemplateController.js";
+
+import { uploadMiddleware } from "../controllers/userController.js";
 import { authorizePermissions } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -15,8 +18,10 @@ router
   .get(getAllAppraisalTemplates)
   .post(authorizePermissions("hr", "student"), createAppraisalTemplate);
 
+router.post("/upload", uploadMiddleware, importAppraisalTemplate);
+
 router
-  .route("/:id")
+  .route("/get-templete")
   .get(getAppraisalTemplate)
   .patch(authorizePermissions("hr"), updateAppraisalTemplate)
   .delete(authorizePermissions("hr"), deleteAppraisalTemplate);
