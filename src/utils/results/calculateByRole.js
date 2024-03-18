@@ -2,6 +2,8 @@ import EvaluationResult from "../../models/apprisalResultModel.js";
 import FinalResult from "../../models/resultDetail.js";
 import getActiveCycle from "../review/getActiveCycle.js";
 import AppraisalTemplate from "../../models/apprisalTempleteModel.js";
+import AppError from "../appError.js";
+import { StatusCodes } from "http-status-codes";
 
 const calculateByEvaluatorRole = async (userId, evaluatorRole) => {
   try {
@@ -12,6 +14,10 @@ const calculateByEvaluatorRole = async (userId, evaluatorRole) => {
       cycle: currentCycle,
       evaluterRole: evaluatorRole,
     });
+
+    if (!roleEvaluations || roleEvaluations.length === 0)
+      throw Error("you have't any associated Resut");
+
     const { questions } = await AppraisalTemplate.findById(
       roleEvaluations[0].appraisalTemplateId
     );
