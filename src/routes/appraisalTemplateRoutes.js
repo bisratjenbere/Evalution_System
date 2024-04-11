@@ -16,7 +16,10 @@ const router = express.Router();
 router
   .route("/")
   .get(getAllAppraisalTemplates)
-  .post(authorizePermissions("hr", "student"), createAppraisalTemplate);
+  .post(authorizePermissions("hr"), createAppraisalTemplate);
+router
+  .route("/:id")
+  .delete(authorizePermissions("hr", deleteAppraisalTemplate));
 
 router.post("/upload", uploadMiddleware, importAppraisalTemplate);
 

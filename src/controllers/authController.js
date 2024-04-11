@@ -12,11 +12,13 @@ import { createJwt, sendToken } from "../utils/tokenUtils.js";
 
 import { NODE_ENV } from "../config/environments.js";
 import Department from "../models/departmentModel.js";
-// import Email from "../utils/email.js";
+import Email from "../utils/email.js";
 
 export const signup = catchAsync(async (req, res, next) => {
-  const hashedPassword = await hashPassword(req.body.password);
-  req.body.password = hashedPassword;
+  if (req.body.password) {
+    let hashedPassword = await hashPassword(req.body.password);
+    req.body.password = hashedPassword;
+  }
 
   const currUserDepartment = await Department.findById(
     req.body.department
@@ -32,6 +34,7 @@ export const signup = catchAsync(async (req, res, next) => {
 });
 export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+
   const loggedInUser = await User.findOne({ email }).select("+password");
 
   const isValidUser =
@@ -43,11 +46,6 @@ export const login = catchAsync(async (req, res, next) => {
     );
   }
 
-  const token = await createJwt({
-    userId: loggedInUser._id,
-    role: loggedInUser.role,
-  });
-
   await sendToken(loggedInUser, req, res);
 });
 export const forgotPassword = catchAsync(async (req, res, next) => {
@@ -57,12 +55,13 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
   }
 
   const resetToken = passwordResetToken(user);
+
   await user.save({ validateBeforeSave: false });
 
   try {
-    const resetURL = `${req.protocol}://${req.get(
-      "host"
-    )}/api/v1/users/resetPassword/${resetToken}`;
+    const resetURL = `${process.env.FrontendURL}/${resetToken}`;
+
+    await new Email(user, resetURL).sendPasswordReset();
 
     res.status(200).json({
       status: "success",
@@ -92,17 +91,18 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
   });
-
   if (!user) {
     return next(new AppError("Token is invalid or has expired", 400));
   }
-  user.password = req.body.password;
-  user.passwordConfirm = req.body.passwordConfirm;
+  user.password = await hashPassword(req.body.password);
+
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
   await user.save();
-
-  createSendToken(user, 200, req, res);
+  res.status(200).json({
+    status: "success",
+    message: "you're sucessfully rest you're password!",
+  });
 });
 
 export const updatePassword = catchAsync(async (req, res, next) => {

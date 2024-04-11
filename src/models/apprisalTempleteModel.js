@@ -21,6 +21,7 @@ const appraisalTemplateSchema = new mongoose.Schema({
   language: {
     type: String,
     enum: ["Amhric", "English"],
+    default: "English",
   },
   questions: [
     {
@@ -28,11 +29,11 @@ const appraisalTemplateSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         default: new mongoose.Types.ObjectId(),
       },
-      questionText: {
+      criteria: {
         type: String,
         required: true,
       },
-      catagory: {
+      category: {
         type: String,
       },
       weight: {

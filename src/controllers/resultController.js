@@ -1,5 +1,5 @@
 import catchAsync from "../utils/catchAsync.js";
-import mapResult from "../utils/results/mapResult.js";
+import mapResult from "../utils/results/mapResultThread.js";
 import { roleMappings } from "../utils/results/mapResult.js";
 import FinalResult from "../models/resultDetail.js";
 import { StatusCodes } from "http-status-codes";
