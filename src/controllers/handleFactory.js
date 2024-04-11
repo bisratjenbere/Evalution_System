@@ -73,7 +73,13 @@ const getAll = (Model) =>
       .sort()
       .limitFields()
       .paginate();
-
+    let query = features.query;
+    if (Model.schema.paths.collegeId) {
+      query = query.populate("collegeId");
+    }
+    if (Model.schema.paths.instructor) {
+      query = query.populate("instructor");
+    }
     const doc = await features.query;
 
     // SEND RESPONSE

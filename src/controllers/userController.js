@@ -10,7 +10,7 @@ import XLSX from "xlsx";
 import { formatImage } from "../middleware/multerMiddleware.js";
 
 import cloudinary from "cloudinary";
-// import Email from "../utils/email.js";
+import Email from "../utils/email.js";
 
 import {
   generateRandomPassword,
@@ -163,31 +163,70 @@ export const createUser = catchAsync(async (req, res) => {
     req.body.password = await hashPassword(randomePassword);
   }
   const newUser = await User.create(req.body);
-  // req.body.role && (await new Email("password reset token", randomePassword));
+  req.body.role &&
+    (await new Email(newUser, null).sendGeneratedPassword(randomePassword));
 
-  res.status(StatusCodes.CREATED).json({ status: "success", data: newUser });
+  res
+    .status(StatusCodes.CREATED)
+    .json({ status: "success", msg: "sucessfully created" });
 });
-export const getUser = factory.getOne(User);
+export const getUser = factory.getOne(User, [
+  { path: "college" },
+  { path: "department" },
+]);
 export const getAllUsers = factory.getAll(User);
 export const updateUser = factory.updateOne(User);
 export const deleteUser = factory.deleteOne(User);
 export const assignRole = catchAsync(async (req, res, next) => {
-  if (req.body.role === "student")
-    return next(new AppError("This Route is For Employee "));
-  const password = generateRandomPassword(6);
-  req.body.password = await hashPassword(password);
-  const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-  if (!updatedUser) {
+  const roleMappings = req.body;
+
+  console.log(req.body);
+
+  if (
+    !roleMappings ||
+    typeof roleMappings !== "object" ||
+    Object.keys(roleMappings).length === 0
+  ) {
     return next(
-      new AppError("There is No User Updated", StatusCodes.NOT_FOUND)
+      new AppError("Invalid request format", StatusCodes.BAD_REQUEST)
     );
   }
-  // const emailInstance = new Email("credential sent");
-  // await emailInstance.send();
-  res.status(200).json({ message: "User updated and email sent successfully" });
+
+  const promises = Object.entries(roleMappings).map(async ([userId, role]) => {
+    if (role === "student") {
+      return next(
+        new AppError(
+          `This Route is For Employee (User ID: ${userId})`,
+          StatusCodes.OK
+        )
+      );
+    }
+
+    const password = generateRandomPassword(6);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { role, password },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedUser) {
+      return next(
+        new AppError(`User with ID ${userId} not found`, StatusCodes.NOT_FOUND)
+      );
+    }
+
+    await new Email(updatedUser, null).sendGeneratedPassword(password);
+  });
+
+  await Promise.all(promises);
+
+  res
+    .status(200)
+    .json({ message: "Users updated and emails sent successfully" });
 });
 
 const multerStorage = multer.memoryStorage();

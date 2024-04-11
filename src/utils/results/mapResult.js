@@ -1,3 +1,4 @@
+/// without using thread and inter-thread communication
 import calculateByEvaluatorRole from "./calculateByRole.js";
 export const roleMappings = {
   teamLeader: ["director", "peer", "self"],

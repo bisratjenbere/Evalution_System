@@ -14,7 +14,6 @@ const userSchema = new mongoose.Schema({
   },
   salutation: {
     type: String,
-    enum: ["Mr", "Mrs", "Ms", "Dr", "Prof"],
   },
   dateOfJoining: {
     type: Date,
@@ -24,12 +23,27 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  designation: {
+    type: String,
+  },
+  branch: String,
+  address: String,
   email: {
     type: String,
     unique: true,
     lowercase: true,
     required: [true, "Email must be given"],
     validate: [validator.isEmail, "Please provide a valid email"],
+  },
+  gender: {
+    type: String,
+  },
+  phone: Number,
+  age: Number,
+
+  companyEmail: String,
+  branch: {
+    type: String,
   },
   role: {
     type: String,
@@ -46,7 +60,6 @@ const userSchema = new mongoose.Schema({
       "dean",
       "hr",
     ],
-    default: "acadamic",
   },
   batch: {
     type: Number,
@@ -64,8 +77,7 @@ const userSchema = new mongoose.Schema({
 
   password: {
     type: String,
-
-    minlength: 8,
+    minlength: 4,
     select: false,
   },
   passwordChangedAt: Date,
@@ -80,8 +92,6 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.index({ department: 1 });
-userSchema.index({ college: 1 });
 userSchema.index({ email: 1 });
 
 userSchema.pre("save", function (next) {

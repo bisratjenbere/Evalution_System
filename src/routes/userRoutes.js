@@ -38,6 +38,7 @@ router.post("/forgotPassword", forgotPassword);
 router.patch("/resetPassword/:token", resetPassword);
 
 router.use(authenticateUser);
+router.route("/assign-role/:id").patch(assignRole);
 router.post("/upload", uploadMiddleware, uploadEmployee);
 router.route("/me").get(getMe, getUser);
 router.route("/update-me").patch(getMe, upload.single("image"), updateMe);
@@ -54,17 +55,11 @@ router
     getEmployeeByDepartmentId
   );
 router.route("/delete-me").delete(deleteMe);
-router
-  .route("/")
-  .post(authorizePermissions("head", "teamLeader", "admin", "hr"), createUser)
-  .get(getAllUsers);
+router.route("/").post(createUser).get(getAllUsers);
 router
   .route("/:id")
   .get(getUser)
   .patch(updateUser)
   .delete(authorizePermissions("head", "admin", "teamLeader"), deleteUser);
-router
-  .route("/assign-role/:id")
-  .patch(authorizePermissions("admin"), assignRole);
 
 export default router;

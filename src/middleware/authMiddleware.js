@@ -29,9 +29,8 @@ export const authenticateUser = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies.jwt) {
-    token = req.cookies.jwt;
   }
+
   if (!token) {
     return next(
       new AppError(
@@ -42,10 +41,14 @@ export const authenticateUser = catchAsync(async (req, res, next) => {
   }
 
   const decoded = await verifyJwt(token);
+
   const freshUser = await User.findById(decoded.payload);
   if (!freshUser) {
     return next(
-      new AppError("The user belonging to this token does not exist.", 401)
+      new AppError(
+        "The user belonging to this token does not exist.",
+        StatusCodes.UNAUTHORIZED
+      )
     );
   }
 
