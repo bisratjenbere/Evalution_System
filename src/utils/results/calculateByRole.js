@@ -1,27 +1,30 @@
 import EvaluationResult from "../../models/apprisalResultModel.js";
 import FinalResult from "../../models/resultDetail.js";
-import getActiveCycle from "../review/getActiveCycle.js";
 import AppraisalTemplate from "../../models/apprisalTempleteModel.js";
-import AppError from "../appError.js";
-import { StatusCodes } from "http-status-codes";
-
-const calculateByEvaluatorRole = async (userId, evaluatorRole) => {
+import generateUpdatedResult from "./generateUpdatedResult.js";
+const calculateByEvaluatorRole = async (
+  userId,
+  evaluatorRole,
+  currentCycle,
+  department,
+  evaluter
+) => {
   try {
-    const currentCycle = await getActiveCycle();
-
     const roleEvaluations = await EvaluationResult.find({
       evaluatedUserId: userId,
-      cycle: currentCycle,
+      cycle: currentCycle._id,
       evaluterRole: evaluatorRole,
     });
 
-    if (!roleEvaluations || roleEvaluations.length === 0)
-      throw Error("you have't any associated Resut");
+    if (!roleEvaluations || roleEvaluations.length === 0) {
+      throw new Error("No associated evaluations found");
+    }
 
-    const { questions } = await AppraisalTemplate.findById(
+    const templete = await AppraisalTemplate.findById(
       roleEvaluations[0].appraisalTemplateId
     );
 
+    const { questions } = templete;
     const totalWeight = questions.reduce(
       (total, item) => total + item.weight,
       0
@@ -29,29 +32,44 @@ const calculateByEvaluatorRole = async (userId, evaluatorRole) => {
 
     const numberOfEvaluations = roleEvaluations.length;
 
-    if (numberOfEvaluations === 0) {
-      return {
-        role: evaluatorRole,
-        total: 0,
-        count: 0,
-      };
-    }
+    const aggregate =
+      numberOfEvaluations === 0
+        ? { total: 0, count: 0 }
+        : {
+            total:
+              calculateTotalByRole(roleEvaluations, totalWeight) /
+              numberOfEvaluations,
+            count: numberOfEvaluations,
+          };
 
-    const totalByRole = roleEvaluations.reduce((acc, evaluation) => {
-      const currentTotal = (evaluation.total * 100) / totalWeight;
+    const updatedResult = generateUpdatedResult({
+      evaluatorRole,
+      aggregate,
+      currentCycle,
+      userId,
+      department,
+      evaluter,
+    });
 
-      return acc + currentTotal;
-    }, 0);
+    const finalResult = await FinalResult.findOneAndUpdate(
+      { cycle: currentCycle, evaluatedUserName: userId },
+      { $set: updatedResult },
+      { upsert: true, new: true }
+    );
 
-    return {
-      role: evaluatorRole,
-      total: totalByRole / numberOfEvaluations,
-      count: numberOfEvaluations,
-    };
+    return finalResult;
   } catch (err) {
     console.error(err);
     throw err;
   }
+};
+
+const calculateTotalByRole = (roleEvaluations, totalWeight) => {
+  return roleEvaluations.reduce((acc, evaluation) => {
+    const currentTotal = (evaluation.total * 100) / totalWeight;
+
+    return acc + currentTotal;
+  }, 0);
 };
 
 export default calculateByEvaluatorRole;

@@ -27,6 +27,7 @@ app.use(express.json());
 app.use(helmet());
 
 app.use(cookieParser());
+
 app.use("/api/v1", allRoutes);
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

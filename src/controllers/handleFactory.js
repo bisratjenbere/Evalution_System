@@ -2,6 +2,8 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 import APIFeatures from "../utils/apiFeatures.js";
 import { StatusCodes } from "http-status-codes";
+import Email from "../utils/email.js";
+import User from "../models/userModel.js";
 
 const deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
@@ -12,6 +14,20 @@ const deleteOne = (Model) =>
     res.status(204).json({
       status: "success",
       data: null,
+    });
+  });
+const deleteMany = (Model) =>
+  catchAsync(async (req, res, next) => {
+    const result = await Model.deleteMany({});
+    if (result.deletedCount === 0) {
+      return next(
+        new AppError("No documents found matching the criteria", 404)
+      );
+    }
+    res.status(204).json({
+      status: "success",
+      data: null,
+      deletedCount: result.deletedCount,
     });
   });
 
@@ -38,7 +54,16 @@ const createOne = (Model) =>
     const doc = await Model.create(req.body);
 
     if (Model.modelName === "AppraisalCycle") {
+      const usersToNotify = await User.find();
+      const { startDate, endDate, description } = req.body;
+      usersToNotify.forEach(async (user) => {
+        await new Email(user, "").notifyTheAvailabilityOfCycle({
+          startDate,
+          endDate,
+        });
+      });
     }
+
     res.status(StatusCodes.CREATED).json({
       status: "success",
       data: doc,
@@ -80,6 +105,9 @@ const getAll = (Model) =>
     if (Model.schema.paths.instructor) {
       query = query.populate("instructor");
     }
+    if (Model.schema.paths.userId) {
+      query = query.populate("userId");
+    }
     const doc = await features.query;
 
     // SEND RESPONSE
@@ -90,4 +118,4 @@ const getAll = (Model) =>
     });
   });
 
-export { deleteOne, updateOne, createOne, getOne, getAll };
+export { deleteOne, updateOne, createOne, getOne, getAll, deleteMany };

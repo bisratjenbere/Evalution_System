@@ -20,7 +20,7 @@ import {
   ensureUserIsDepartmentMember,
 } from "../middleware/validationMiddleware/evalutionValidation.js";
 const evaluationRouter = express.Router();
-evaluationRouter.route("/self").post(validateEvaluationInput, reviewBySelf);
+evaluationRouter.route("/by-self").post(validateEvaluationInput, reviewBySelf);
 evaluationRouter
   .route("/by-peer/:id")
   .post(
@@ -48,7 +48,7 @@ evaluationRouter
     reviewByDean
   );
 evaluationRouter
-  .route("/by-team-leader/:id")
+  .route("/by-teamLeader/:id")
   .post(
     authorizePermissions("teamLeader"),
     validateIdParams,
@@ -57,7 +57,7 @@ evaluationRouter
     reviewByTeamLeader
   );
 evaluationRouter
-  .route("/director/:id")
+  .route("/by-director/:id")
   .post(
     authorizePermissions("director"),
     validateIdParams,
@@ -66,7 +66,7 @@ evaluationRouter
     reviewByDirector
   );
 evaluationRouter
-  .route("/student/:id")
+  .route("/by-student/:id")
   .post(
     authorizePermissions("student"),
     validateCourseId,

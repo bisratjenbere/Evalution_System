@@ -52,6 +52,9 @@ export const updateMe = catchAsync(async (req, res, next) => {
     "firstName",
     "lastName",
     "email",
+    "role",
+    "phone",
+    "address",
     "batch"
   );
 
@@ -59,16 +62,20 @@ export const updateMe = catchAsync(async (req, res, next) => {
     new: true,
     runValidators: true,
   });
+
   if (req.file) {
     if (req.file && updatedUser.avatarPublicId) {
       await cloudinary.v2.uploader.destroy(updatedUser.avatarPublicId);
     }
     const file = formatImage(req.file);
     const response = await cloudinary.v2.uploader.upload(file);
+
     updatedUser.avatar = response.secure_url;
     updatedUser.avatarPublicId = response.public_id;
   }
 
+  await updatedUser.save();
+  console.log(updatedUser);
   res.status(200).json({
     status: "success",
     data: updatedUser,
@@ -79,6 +86,7 @@ export const getPeer = catchAsync(async (req, res, next) => {
   let matchedUser = {};
 
   const currentUser = req.user;
+
   if (
     currentUser.role === "director" ||
     currentUser.role === "teamLeader" ||
@@ -115,13 +123,29 @@ export const getStudentByDepartmentId = catchAsync(async (req, res, next) => {
 });
 export const getEmployeeByDepartmentId = catchAsync(async (req, res, next) => {
   const depId = req.params.id;
-  const employee = await User.find({
-    department: depId,
-    role: { $ne: "student" },
-  }).populate({ path: "department" });
+  const { role } = req.user;
+
+  let employee;
+  if (role === "director") {
+    const director = await User.findById(req.user._id);
+    employee = await User.find({
+      college: director.college,
+      role: "teamLeader",
+    }).populate({ path: "department" });
+  } else if (role === "dean") {
+    employee = await User.find({
+      college: req.user.college,
+      role: "head",
+    }).populate({ path: "department" });
+  } else {
+    employee = await User.find({
+      department: depId,
+      role: { $nin: ["student", "teamLeader", "head"] },
+    }).populate({ path: "department" });
+  }
 
   if (!employee || employee.length === 0)
-    return new AppError("No Employee Found with this depId");
+    return next(new AppError("No Employee Found with this department ID", 404));
 
   res.status(StatusCodes.OK).json({ status: "success", data: employee });
 });
@@ -131,7 +155,6 @@ export const getUnEvalutedEmployeeByDepartmentId = catchAsync(
     const depId = req.params.id;
     const employee = await User.find({
       department: depId,
-      role: { $ne: "student" },
     }).populate({ path: "department" });
 
     if (!employee || employee.length === 0)
@@ -162,6 +185,10 @@ export const createUser = catchAsync(async (req, res) => {
     randomePassword = generateRandomPassword(6);
     req.body.password = await hashPassword(randomePassword);
   }
+  console.log(randomePassword);
+  req.body.department = req.user.department;
+
+  req.body.college = req.user.college;
   const newUser = await User.create(req.body);
   req.body.role &&
     (await new Email(newUser, null).sendGeneratedPassword(randomePassword));
@@ -179,8 +206,6 @@ export const updateUser = factory.updateOne(User);
 export const deleteUser = factory.deleteOne(User);
 export const assignRole = catchAsync(async (req, res, next) => {
   const roleMappings = req.body;
-
-  console.log(req.body);
 
   if (
     !roleMappings ||
@@ -282,3 +307,17 @@ export const uploadEmployee = async (req, res) => {
     return res.json({ status: "failed", msg: "Error uploading file." });
   }
 };
+
+export const getuserByDepartmentId = catchAsync(async (req, res, next) => {
+  const { role } = req.user;
+
+  let employee = await User.find({
+    department: req.user.department,
+    role: { $nin: ["teamLeader", "head"] },
+  }).populate({ path: "department" });
+
+  if (!employee || employee.length === 0)
+    return next(new AppError("No Employee Found with this department ID", 404));
+
+  res.status(StatusCodes.OK).json({ status: "success", data: employee });
+});

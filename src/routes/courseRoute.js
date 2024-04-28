@@ -30,7 +30,7 @@ router.get(
 
 router
   .route("/")
-  .get(authorizePermissions("head"), getAllCourses)
+  .get(authorizePermissions("head", "student"), getAllCourses)
   .post(authorizePermissions("head", "student"), createCourse);
 router
   .route("/:id")

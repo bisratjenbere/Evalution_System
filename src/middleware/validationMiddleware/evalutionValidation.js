@@ -72,8 +72,10 @@ const ensureUserIsDepartmentMember = withValidationErrors([
     const reviewedUser = await User.findOne({
       department: req.user.department,
       _id: req.params.id,
-      role: { $nin: ["student", "head", "teamLeader", "director", "dean"] },
+      role: { $nin: ["student"] },
     });
+
+    console.log(reviewedUser);
 
     if (!reviewedUser) {
       throw new AppError(

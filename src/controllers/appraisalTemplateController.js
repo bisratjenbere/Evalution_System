@@ -13,23 +13,26 @@ import { StatusCodes } from "http-status-codes";
 export const getAllAppraisalTemplates = getAll(AppraisalTemplate);
 
 export const createAppraisalTemplate = createOne(AppraisalTemplate);
-
 export const updateAppraisalTemplate = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const doc = await AppraisalTemplate.findByIdAndUpdate(
-    id,
-    {
-      $addToSet: { questions: { $each: req.body.questions } },
+  const { questionId, updatedQuestion } = req.body;
 
-      ...(req.body.evaluationType && {
-        $set: { evaluationType: req.body.evaluationType },
-      }),
+  const doc = await AppraisalTemplate.findOneAndUpdate(
+    { _id: id, "questions._id": questionId },
+    {
+      $set: {
+        "questions.$.criteria": updatedQuestion.criteria,
+        "questions.$.category": updatedQuestion.category,
+        "questions.$.weight": updatedQuestion.weight,
+      },
     },
     { new: true, runValidators: true }
   );
 
   if (!doc) {
-    return next(new AppError("No template found with that ID", 404));
+    return next(
+      new AppError("No question found with that ID in the template", 404)
+    );
   }
 
   res.status(200).json({
@@ -44,9 +47,9 @@ async function processTemplateDataAndSave(data, evaluationType, language) {
 
     for (let row = 1; row < data.length; row++) {
       const question = {
-        questionText: data[row][0],
-        category: data[row][2],
-        weight: parseInt(data[row][1]),
+        criteria: data[row][0],
+        category: data[row][1],
+        weight: parseInt(data[row][2]),
       };
       questions.push(question);
     }
@@ -80,6 +83,7 @@ export const importAppraisalTemplate = async (req, res, next) => {
     }
 
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
@@ -140,3 +144,29 @@ export const getAppraisalTemplate = catchAsync(async (req, res) => {
   });
 });
 export const deleteAppraisalTemplate = deleteOne(AppraisalTemplate);
+
+export const deleteAppraisalQuestion = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { questionId } = req.body;
+
+  if (!questionId) {
+    return next(
+      new AppError("Question ID is missing from the request body", 400)
+    );
+  }
+
+  const doc = await AppraisalTemplate.findOneAndUpdate(
+    { _id: id },
+    { $pull: { questions: { _id: questionId } } },
+    { new: true }
+  );
+
+  if (!doc) {
+    return next(new AppError("No template found with that ID", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: doc,
+  });
+});

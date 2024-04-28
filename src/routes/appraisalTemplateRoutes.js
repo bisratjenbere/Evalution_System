@@ -6,6 +6,7 @@ import {
   updateAppraisalTemplate,
   deleteAppraisalTemplate,
   importAppraisalTemplate,
+  deleteAppraisalQuestion,
 } from "../controllers/appraisalTemplateController.js";
 
 import { uploadMiddleware } from "../controllers/userController.js";
@@ -19,14 +20,10 @@ router
   .post(authorizePermissions("hr"), createAppraisalTemplate);
 router
   .route("/:id")
-  .delete(authorizePermissions("hr", deleteAppraisalTemplate));
-
+  .delete(authorizePermissions("hr"), deleteAppraisalTemplate)
+  .patch(authorizePermissions("hr"), updateAppraisalTemplate);
 router.post("/upload", uploadMiddleware, importAppraisalTemplate);
 
-router
-  .route("/get-templete")
-  .get(getAppraisalTemplate)
-  .patch(authorizePermissions("hr"), updateAppraisalTemplate)
-  .delete(authorizePermissions("hr"), deleteAppraisalTemplate);
-
+router.route("/get-templete").get(getAppraisalTemplate);
+router.route("/question/:id").patch(deleteAppraisalQuestion);
 export default router;

@@ -77,4 +77,28 @@ export default class Email {
   `;
     await this.send(htmlContent, subject);
   }
+  async notifyTheAvailabilityOfCycle({ startDate, endDate }) {
+    const subject = "New Appraisal Cycle Initiated";
+    const htmlContent = `
+    <div style="font-family: Arial, sans-serif; color: #333; background-color: #f5f5f5; padding: 20px; border-radius: 5px;">
+    <h2 style="margin-bottom: 15px;">Evaluation Period Starts Today!</h2>
+    <p>This is a friendly reminder that the new appraisal cycle has begun. The evaluation period is now open, and we encourage you to complete your self-assessment and provide feedback for your colleagues during this time.</p>
+    <ul style="list-style-type: none; padding: 0; margin-top: 20px;">
+      <li><strong>Start Date:</strong> ${startDate}</li>
+      <li><strong>End Date:</strong> ${endDate}</li>
+    </ul>
+    <p style="margin-top: 15px;">For a smooth evaluation process, we recommend you take the following steps:</p>
+      <ol style="padding: 0; list-style-type: decimal; margin-left: 20px;">
+        <li>Review your goals and objectives set during the previous cycle.</li>
+        <li>Complete your self-assessment form, reflecting on your accomplishments and areas for improvement.</li>
+        <li>Schedule meetings with colleagues to provide and receive feedback.</li>
+      </ol>
+    <p style="margin-top: 20px;">You can access the appraisal portal and manage the entire cycle <a href="URL_TO_APPRAISAL_CYCLE" style="color: #007bff; text-decoration: none;">here</a>.</p>
+    <p style="margin-top: 20px;">We believe in fostering a culture of continuous development and growth. This evaluation process is an opportunity to reflect on your achievements, identify areas for improvement, and set goals for the future.</p>
+    <p style="margin-top: 20px;">Best regards,</p>
+    <p>Your AppraisalCycle Team</p>
+  </div>
+        `;
+    await this.send(htmlContent, subject);
+  }
 }

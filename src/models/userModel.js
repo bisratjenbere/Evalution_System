@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "last name must be given!"],
   },
+
   salutation: {
     type: String,
   },
@@ -38,9 +39,10 @@ const userSchema = new mongoose.Schema({
   gender: {
     type: String,
   },
+
   phone: Number,
   age: Number,
-
+  section: Number,
   companyEmail: String,
   branch: {
     type: String,
