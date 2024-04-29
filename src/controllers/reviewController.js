@@ -3,17 +3,39 @@ import catchAsync from "../utils/catchAsync.js";
 import EvaluationResult from "../models/apprisalResultModel.js";
 import buildEvaluationQuery from "../utils/review/buildQuery.js";
 import performCommonChecks from "../utils/review/performCommenCheck.js";
+import calculateByEvaluatorRole from "../utils/results/calculateByRole.js";
+import FinalResult from "../models/resultDetail.js";
 async function handleEvaluation(req, res, next, evalType) {
   performCommonChecks(req, next, evalType, async (req, activeCycle) => {
-    const query = await buildEvaluationQuery(req, evalType, activeCycle);
-    const newEvaluationResult = new EvaluationResult(query);
-    newEvaluationResult["appraisalTemplateId"] = req.body.templete;
-    newEvaluationResult["results"] = req.body.evalData;
-    await newEvaluationResult.save();
-    res.status(StatusCodes.OK).json({
-      status: "success",
-      msg: `${evalType} evaluation has been successfully submitted.`,
-    });
+    try {
+      const query = await buildEvaluationQuery(req, evalType, activeCycle);
+      const newEvaluationResult = new EvaluationResult(query);
+      newEvaluationResult["appraisalTemplateId"] = req.body.templete;
+      newEvaluationResult["results"] = req.body.evalData;
+
+      await newEvaluationResult.save();
+
+      await calculateByEvaluatorRole(
+        query.evaluatedUserId,
+        evalType,
+        activeCycle,
+        req.user.department,
+        req.user._id
+      );
+
+      res.status(200).json({
+        status: "success",
+        message: "Evaluation result saved and processed successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving or processing evaluation:", error);
+
+      res.status(500).json({
+        status: "error",
+        message: "Failed to save or process evaluation.",
+      });
+    } finally {
+    }
   });
 }
 

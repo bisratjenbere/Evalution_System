@@ -4,7 +4,6 @@ const appraisalCycleSchema = new mongoose.Schema({
     type: String,
     enum: ["planned", "active", "completed"],
     required: true,
-    default: "planned",
   },
   description: String,
   startDate: {

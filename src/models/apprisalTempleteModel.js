@@ -17,7 +17,6 @@ const appraisalTemplateSchema = new mongoose.Schema({
     required: true,
     default: "self",
   },
-
   language: {
     type: String,
     enum: ["Amhric", "English"],
@@ -25,10 +24,6 @@ const appraisalTemplateSchema = new mongoose.Schema({
   },
   questions: [
     {
-      _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        default: new mongoose.Types.ObjectId(),
-      },
       criteria: {
         type: String,
         required: true,
@@ -45,10 +40,18 @@ const appraisalTemplateSchema = new mongoose.Schema({
     },
   ],
 });
-appraisalTemplateSchema.index(
-  { evaluationType: 1, language: 1 },
-  { unique: true }
-);
+
+appraisalTemplateSchema.pre("save", function (next) {
+  const template = this;
+  if (!template.isNew) {
+    return next();
+  }
+  template.questions.forEach((question) => {
+    question._id = new mongoose.Types.ObjectId();
+  });
+  next();
+});
+
 const AppraisalTemplate = mongoose.model(
   "AppraisalTemplate",
   appraisalTemplateSchema

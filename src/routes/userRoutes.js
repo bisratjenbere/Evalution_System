@@ -14,6 +14,7 @@ import {
   deleteUser,
   assignRole,
   uploadMiddleware,
+  getuserByDepartmentId,
   uploadEmployee,
 } from "../controllers/userController.js";
 
@@ -41,9 +42,9 @@ router.use(authenticateUser);
 router.route("/assign-role/:id").patch(assignRole);
 router.post("/upload", uploadMiddleware, uploadEmployee);
 router.route("/me").get(getMe, getUser);
-router.route("/update-me").patch(getMe, upload.single("image"), updateMe);
+router.route("/update-me/:id").patch(getMe, upload.single("image"), updateMe);
 router.route("/peers").get(getPeer);
-
+router.route("/alluser").get(getuserByDepartmentId);
 router
   .route("/students/:id")
   .get(authorizePermissions("head"), getStudentByDepartmentId);
@@ -51,7 +52,14 @@ router
 router
   .route("/employees/:id")
   .get(
-    authorizePermissions("hr", "director", "teamLeader", "head", "admin"),
+    authorizePermissions(
+      "hr",
+      "director",
+      "teamLeader",
+      "head",
+      "dean",
+      "admin"
+    ),
     getEmployeeByDepartmentId
   );
 router.route("/delete-me").delete(deleteMe);

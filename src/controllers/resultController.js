@@ -1,112 +1,172 @@
 import catchAsync from "../utils/catchAsync.js";
-import mapResult from "../utils/results/mapResultThread.js";
-import { roleMappings } from "../utils/results/mapResult.js";
+
 import FinalResult from "../models/resultDetail.js";
 import { StatusCodes } from "http-status-codes";
-import User from "../models/userModel.js";
+
 import getActiveCycle from "../utils/review/getActiveCycle.js";
 import EvaluationResult from "../models/apprisalResultModel.js";
-import AppraisalTemplate from "../models/apprisalTempleteModel.js";
+
+import { getAll, deleteMany } from "./handleFactory.js";
+
+import roleWeights from "../utils/results/roleWeights.js";
+import Course from "../models/courseModel.js";
+
+import AppError from "../utils/appError.js";
+import User from "../models/userModel.js";
+
 export const getFinalResult = async (req, res, next) => {
   try {
-    const percentMappings = {
-      self: 0.1,
-      acadamicPeer: 0.15,
-      adminPeer: 0.12,
-      teamLeader: 0.13,
-      head: 0.35,
-      dean: 0.35,
-      director: 0.35,
-      student: 0.5,
-    };
-    const result = await mapResult(req);
-    let documentToBeInserted = {};
-    for (let curr of result) {
-      switch (curr.role) {
-        case "student":
-          documentToBeInserted["byStudent"] = {
-            total: curr.total,
-            countOfReviewer: curr.count,
-          };
-          break;
-        case "peer":
-          documentToBeInserted["byPeer"] = {
-            total: curr.total,
-            countOfReviewer: curr.count,
-          };
-          break;
-        case "head":
-          documentToBeInserted["byHead"] = curr.total;
-          break;
-        case "dean":
-          documentToBeInserted["byDean"] = curr.total;
-          break;
-        case "director":
-          documentToBeInserted["byDirector"] = curr.total;
-          break;
-        case "teamLeader":
-          documentToBeInserted["byTeamLeader"] = curr.total;
-          break;
-
-        case "self":
-          documentToBeInserted["self"] = curr.total;
-          break;
-      }
-    }
-    const activeCycle = (await getActiveCycle())._id;
-    documentToBeInserted["department"] = req.user.department;
-    documentToBeInserted["evaluatedUserName"] = req.user._id;
-    documentToBeInserted["cycle"] = activeCycle;
-
-    const existingDocument = await FinalResult.findOneAndUpdate(
-      {
-        cycle: activeCycle,
-        evaluatedUserName: req.user._id,
-      },
-      documentToBeInserted,
-      { upsert: true, new: true }
-    );
-    await existingDocument.calculateRanks();
-
-    const percentedResult = result.map((curr) => {
-      const acadamicRole = [
-        "instructor",
-        "director",
-        "head",
-        "dean",
-        "assistance",
-        "acadamic",
-      ];
-      let percent;
-      if (curr.role === "peer") {
-        percent = acadamicRole.includes(req.user.role)
-          ? percentMappings["acadamicPeer"]
-          : percentMappings["adminPeer"];
-      } else {
-        percent = percentMappings[curr.role];
-      }
-
-      return {
-        total: curr.total * percent,
-        count: curr.count,
-        role: curr.role,
-        outOf: percent * 100,
-      };
+    const cycle = await getActiveCycle();
+    const resultOfCurrentEmployee = await FinalResult.findOne({
+      evaluatedUserName: req.user._id,
+      cycle: cycle._id,
     });
+    if (resultOfCurrentEmployee) await resultOfCurrentEmployee.calculateRanks();
 
-    const totalPercent = Object.values(percentMappings).reduce(
-      (acc, val) => acc + val,
-      0
-    );
+    const user = req.user;
+
+    const weights = await calculateWeights(user, resultOfCurrentEmployee);
 
     res.status(StatusCodes.OK).json({
-      totalPercent,
-      data: percentedResult,
+      status: "success",
+      data: {
+        status: resultOfCurrentEmployee?.status,
+        weights,
+      },
     });
   } catch (error) {
-    next(error);
+    console.error("Error in getFinalResult:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+export const calculateWeights = async (user, result) => {
+  try {
+    const roleWeight = roleWeights[user.role] || roleWeights["other"];
+    let calculatedResult = [];
+
+    const acadamicRole = [
+      "head",
+      "director",
+      "dean",
+      "instructor",
+      "assistance",
+      "acadamic",
+    ];
+    let peerResult, studentResult, managerResult;
+
+    peerResult = result?.byPeer ? result.byPeer.total * roleWeight.peer : 0;
+
+    if (acadamicRole.includes(user.role)) {
+      const isInstructor = result?.byStudent.total ? true : false;
+
+      managerResult =
+        user.role === "head"
+          ? result?.byDean
+            ? result.byDean * roleWeight.dean
+            : 0
+          : result?.byHead
+          ? result.byHead * roleWeight.head
+          : 0;
+      if (isInstructor) {
+        studentResult = result?.byStudent
+          ? result.byStudent.total * roleWeight.student
+          : 0;
+
+        calculatedResult[0] = {
+          name: "Student",
+          score: studentResult,
+          rank: result?.byStdRank,
+        };
+        calculatedResult[1] = {
+          name: "Peer",
+          score: peerResult,
+          rank: result?.byPeerRank,
+        };
+        const managerLabel = user.role === "head" ? "Director" : "head";
+        const managerRank =
+          user.role === "head" ? result?.byDeanRank : result?.byHeadRank;
+
+        calculatedResult[2] = {
+          name: managerLabel,
+          score: managerResult,
+          rank: managerRank,
+        };
+
+        calculatedResult[3] = {
+          total: studentResult + peerResult + managerResult,
+        };
+      } else {
+        const total = (peerResult + managerResult) * 2;
+        const managerLabel = user.role === "head" ? "Dean" : "head";
+        const managerRank =
+          user.role === "head" ? result?.byDeanRank : result?.byHeadRank;
+
+        calculatedResult[0] = {
+          name: "Peer",
+          score: peerResult,
+          rank: result?.byPeerRank,
+        };
+        calculatedResult[1] = {
+          name: managerLabel,
+          score: managerResult,
+          rank: managerRank,
+        };
+        calculatedResult[2] = {};
+        calculatedResult[3] = {
+          total,
+        };
+      }
+    } else {
+      const selfResult = result?.bySelf ? result.bySelf * roleWeight.self : 0;
+
+      const managerLabel =
+        user.role === "teamLeader" ? "Director" : "TeamLeader";
+      const managerRank =
+        user.role === "teamLeader"
+          ? result?.byDirectorRank
+          : result?.byTeamLeaderRank;
+      managerResult =
+        user.role === "teamLeader"
+          ? result?.byDirector
+            ? result.byDirector * roleWeight.director
+            : 0
+          : result?.byTeamLeader
+          ? result.byTeamLeaderRank * roleWeight.teamLeader
+          : 0;
+      const total = ((selfResult + peerResult + managerResult) * 100) / 35;
+      calculatedResult[0] = {
+        name: "self",
+        score: selfResult,
+        rank: result?.bySelfRank,
+      };
+      calculatedResult[1] = {
+        name: "Peer",
+        score: peerResult,
+        rank: result?.byPeerRank,
+      };
+      calculatedResult[2] = {
+        name: managerLabel,
+        score: managerResult,
+        rank: managerRank,
+      };
+      calculatedResult[3] = {
+        total,
+      };
+    }
+
+    return calculatedResult;
+  } catch (err) {
+    console.error("Error in calculateWeights:", err);
+    throw err;
+  }
+};
+
+const isUserInstructor = async (userId) => {
+  const courses = await Course.find({});
+  return courses.length > 0;
+};
+
 export const getDetailedResult = async (req, res, next) => {
   try {
     const activeCycle = await getActiveCycle();
@@ -151,8 +211,12 @@ export const getDetailedResult = async (req, res, next) => {
 
 export const approveEvalutionResult = catchAsync(async (req, res, next) => {
   const evaluationResultID = req.params.id;
-
-  const evaluationResult = await FinalResult.findById(evaluationResultID);
+  const activeCycle = await getActiveCycle();
+  const evaluationResult = await FinalResult.findOne({
+    evaluatedUserName: evaluationResultID,
+    cycle: activeCycle._id,
+  });
+  console.log(evaluationResult);
 
   if (!evaluationResult) {
     return res
@@ -254,3 +318,101 @@ export const getHeadEvalution = catchAsync(async (req, res, next) => {
   });
   res.status(StatusCodes.OK).json({ data: filteredEvalution });
 });
+
+export const geAllResult = getAll(FinalResult);
+export const getAllDetail = getAll(EvaluationResult);
+
+export const deleteAllFinal = deleteMany(FinalResult);
+export const deleteAllDetail = deleteMany(EvaluationResult);
+
+export const getSubordinateEmployeesWithResults = catchAsync(
+  async (req, res, next) => {
+    const depId = req.user.department;
+    const { role } = req.user;
+    const cycle = await getActiveCycle();
+
+    let employees;
+    if (role === "director") {
+      const director = await User.findById(req.user._id);
+      employees = await User.find({
+        college: director.college,
+        role: "teamLeader",
+      }).populate({ path: "department" });
+    } else if (role === "dean") {
+      employees = await User.find({
+        college: req.user.college,
+        role: "head",
+      }).populate({ path: "department" });
+    } else {
+      employees =
+        role === "teamLeader"
+          ? await User.find({
+              department: depId,
+              role: {
+                $nin: ["student", "teamLeader", "head", "dean", "director"],
+              },
+            }).populate({ path: "department" })
+          : await User.find({
+              department: depId,
+              role: {
+                $nin: ["student", "teamLeader", "head", "dean"],
+              },
+            }).populate({ path: "department" });
+    }
+
+    if (!employees || employees.length === 0)
+      return next(
+        new AppError("No Employees Found with this department ID", 404)
+      );
+
+    const results = [];
+    for (const employee of employees) {
+      const employeeResult = await FinalResult.findOne({
+        evaluatedUserName: employee._id,
+        cycle: cycle._id,
+      });
+      if (employeeResult) {
+        const totalResult = calculateTotalResult(employeeResult);
+        results.push({
+          employee,
+          totalResult,
+          evaluationStatus: employeeResult.status,
+        });
+      } else {
+        results.push({
+          employee,
+          totalResult: null,
+          evaluationStatus: "Evaluation not found",
+        });
+      }
+    }
+
+    res.status(StatusCodes.OK).json({ status: "success", data: results });
+  }
+);
+
+const calculateTotalResult = (result) => {
+  let total = 0;
+  if (result.byPeer && result.byPeer.total !== undefined) {
+    total += result.byPeer.total;
+  }
+  if (result.byStudent && result.byStudent.total !== undefined) {
+    total += result.byStudent.total;
+  }
+  if (result.byDean !== undefined) {
+    total += result.byDean;
+  }
+  if (result.byDirector !== undefined) {
+    total += result.byDirector;
+  }
+  if (result.byTeamLeader !== undefined) {
+    total += result.byTeamLeader;
+  }
+  if (result.byHead !== undefined) {
+    total += result.byHead;
+  }
+  if (result.bySelf !== undefined) {
+    total += result.bySelf;
+  }
+  return total;
+};

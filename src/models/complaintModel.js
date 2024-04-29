@@ -21,6 +21,7 @@ const complaintSchema = new mongoose.Schema({
     default: "open",
     required: true,
   },
+  resolvedText: String,
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

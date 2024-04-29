@@ -25,18 +25,19 @@ export const deleteCourse = deleteOne(Course);
 export const getActiveCoursesForStudent = catchAsync(async (req, res, next) => {
   const studentId = req.user._id;
   const studentDepartment = req.user.department;
-  const studentBatch = req.user.batch;
-
+  const studentBatch = req.user?.batch;
+  const studentSection = req.user?.section;
+  console.log(req.user);
   const allCourse = await Course.find({
-    department: studentDepartment,
     batch: studentBatch,
+    section: studentSection,
   }).populate({ path: "instructor" });
 
   const activeCourses = allCourse.filter((course) => course.isActive);
 
   return res.status(StatusCodes.OK).json({
     status: "success",
-    courses: activeCourses,
+    data: activeCourses,
   });
 });
 
@@ -55,18 +56,18 @@ export const getCoursesForDepartment = catchAsync(async (req, res, next) => {
 
 async function processDataAndSave(data, req) {
   try {
-    const headDeptID = req.user._id;
+    const headDeptID = req.user.department;
 
     for (let row = 1; row < data.length; row++) {
       const newCourse = new Course({
         code: data[row][0],
         name: data[row][1],
-        semester: parseInt(data[row][2]),
-        batch: parseInt(data[row][3]),
+        batch: parseInt(data[row][2]),
+        semester: parseInt(data[row][3]),
+        section: parseInt(data[row][4]),
         department: headDeptID,
-        startDate: new Date(data[row][4]),
-        endDate: new Date(data[row][5]),
-        instructor: data[row][6],
+        startDate: new Date(data[row][5]),
+        endDate: new Date(data[row][6]),
       });
 
       await newCourse.save();
@@ -81,7 +82,6 @@ async function processDataAndSave(data, req) {
 
 export const uploadCourse = async (req, res) => {
   try {
-    console.log("iniguf");
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });

@@ -30,6 +30,10 @@ const courseSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    section: {
+      type: Number,
+      default: 1,
+    },
     startDate: {
       type: Date,
       required: true,
@@ -54,8 +58,11 @@ const courseSchema = new mongoose.Schema(
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-courseSchema.index({ code: 1, batch: 1 }, { unique: true });
-courseSchema.index({ department: 1, instructor: 1, batch: 1 });
+courseSchema.index(
+  { code: 1, batch: 1, section: 1, department: 1 },
+  { unique: true }
+);
+
 courseSchema.virtual("isActive").get(function () {
   const currentDate = new Date();
   return this.startDate <= currentDate && this.endDate >= currentDate;
@@ -67,6 +74,7 @@ courseSchema.path("batch").validate(async function (value) {
     batch: this.batch,
     code: this.code,
     department: this.department,
+    section: this.section,
   });
 
   return !count;

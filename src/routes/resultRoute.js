@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  geAllResult,
   getFinalResult,
   getDetailedResult,
   approveEvalutionResult,
@@ -8,9 +9,16 @@ import {
   getHeadEvalution,
   getTeamLeaderEvalution,
   getEvalutionByDepartmentID,
+  getAllDetail,
+  deleteAllDetail,
+  deleteAllFinal,
+  getSubordinateEmployeesWithResults,
 } from "../controllers/resultController.js";
 const router = express.Router();
+router.route("/").get(geAllResult).delete(deleteAllFinal);
+router.route("/detail").get(getAllDetail).delete(deleteAllDetail);
 router.get("/final-result", getFinalResult);
+router.get("/department-result", getSubordinateEmployeesWithResults);
 router.get("/detailed-result", getDetailedResult);
 router.patch("/approve-result/:id", approveEvalutionResult);
 router.delete("/delete-result/:id", deleteEvalutionResult);
