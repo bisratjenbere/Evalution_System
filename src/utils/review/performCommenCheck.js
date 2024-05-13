@@ -6,11 +6,12 @@ import EvaluationResult from "../../models/apprisalResultModel.js";
 async function performCommonChecks(req, next, evalType, callback) {
   try {
     const activeCycle = await getActiveCycle();
+
     const startDate = activeCycle.startDate;
     const endDate = activeCycle.endDate;
     const today = new Date();
 
-    if (!(today > startDate && today < endDate)) {
+    if (!(today >= startDate && today <= endDate)) {
       return next(
         new AppError(
           "Sorry, You are not allowed to give evaluation. Try again when the evaluation starts on",

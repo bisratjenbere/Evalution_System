@@ -27,7 +27,7 @@ export const getActiveCoursesForStudent = catchAsync(async (req, res, next) => {
   const studentDepartment = req.user.department;
   const studentBatch = req.user?.batch;
   const studentSection = req.user?.section;
-  console.log(req.user);
+
   const allCourse = await Course.find({
     batch: studentBatch,
     section: studentSection,

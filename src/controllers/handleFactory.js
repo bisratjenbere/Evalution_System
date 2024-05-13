@@ -4,7 +4,7 @@ import APIFeatures from "../utils/apiFeatures.js";
 import { StatusCodes } from "http-status-codes";
 import Email from "../utils/email.js";
 import User from "../models/userModel.js";
-
+import { sendNotification } from "../utils/notificationService.js";
 const deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findByIdAndDelete(req.params.id);
@@ -56,6 +56,11 @@ const createOne = (Model) =>
     if (Model.modelName === "AppraisalCycle") {
       const usersToNotify = await User.find();
       const { startDate, endDate, description } = req.body;
+      await sendNotification(
+        usersToNotify,
+        "Evaluation Schedule Started",
+        `Evaluation schedule started from ${startDate} to ${endDate}.`
+      );
       usersToNotify.forEach(async (user) => {
         await new Email(user, "").notifyTheAvailabilityOfCycle({
           startDate,

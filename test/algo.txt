@@ -1,0 +1,28 @@
+FUNCTION ViewAppraisalResult(employee):
+    userLogin = AuthenticateEmployeeLogin(employee)
+    
+    IF userLogin == Successful THEN
+        evaluationCompleted = CheckEvaluationCompletion(employee)
+        evaluationFinalized = CheckEvaluationFinalization(employee)
+        
+        IF evaluationCompleted AND evaluationFinalized THEN
+            NavigateToAppraisalSection(employee)
+            finalizedResults = RetrieveFinalizedAppraisalResults(employee)
+            
+            IF finalizedResults is Available THEN
+                PresentAppraisalResults(finalizedResults)
+                EmployeeReviewsAppraisalResults()
+                RETURN "Appraisal Results Reviewed Successfully"
+            ELSE
+                RETURN "No Appraisal Results Available"
+            END IF
+            
+        ELSE
+            DisplayMessage("Appraisal results not available yet")
+            RETURN "Pre-conditions not met"
+        END IF
+        
+    ELSE
+        RETURN "Login Failed"
+    END IF
+END FUNCTION
