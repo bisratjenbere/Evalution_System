@@ -10,13 +10,14 @@ import { getAll, deleteMany } from "./handleFactory.js";
 
 import roleWeights from "../utils/results/roleWeights.js";
 import Course from "../models/courseModel.js";
-
+import { sendNotification } from "../utils/notificationService.js";
 import AppError from "../utils/appError.js";
 import User from "../models/userModel.js";
 
 export const getFinalResult = async (req, res, next) => {
   try {
     const cycle = await getActiveCycle();
+
     const resultOfCurrentEmployee = await FinalResult.findOne({
       evaluatedUserName: req.user._id,
       cycle: cycle._id,
@@ -24,6 +25,34 @@ export const getFinalResult = async (req, res, next) => {
     if (resultOfCurrentEmployee) await resultOfCurrentEmployee.calculateRanks();
 
     const user = req.user;
+
+    const weights = await calculateWeights(user, resultOfCurrentEmployee);
+
+    res.status(StatusCodes.OK).json({
+      status: "success",
+      data: {
+        status: resultOfCurrentEmployee?.status,
+        weights,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getFinalResult:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getEmployeeFinalResult = async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+    const cycleId = req.params.cycleId;
+
+    const resultOfCurrentEmployee = await FinalResult.findOne({
+      evaluatedUserName: userId,
+      cycle: cycleId,
+    });
+    if (resultOfCurrentEmployee) await resultOfCurrentEmployee.calculateRanks();
+
+    const user = await User.findById(userId);
 
     const weights = await calculateWeights(user, resultOfCurrentEmployee);
 
@@ -210,13 +239,13 @@ export const getDetailedResult = async (req, res, next) => {
 };
 
 export const approveEvalutionResult = catchAsync(async (req, res, next) => {
+  const usersToNotify = [];
   const evaluationResultID = req.params.id;
   const activeCycle = await getActiveCycle();
   const evaluationResult = await FinalResult.findOne({
     evaluatedUserName: evaluationResultID,
     cycle: activeCycle._id,
   });
-  console.log(evaluationResult);
 
   if (!evaluationResult) {
     return res
@@ -227,7 +256,12 @@ export const approveEvalutionResult = catchAsync(async (req, res, next) => {
   evaluationResult.ApprovedDate = new Date();
   evaluationResult.ApprovedBy = req.user._id;
   await evaluationResult.save();
-
+  usersToNotify.push({ _id: evaluationResultID });
+  await sendNotification(
+    usersToNotify,
+    "Evaluation Result Approved",
+    `Your evaluation result has been approved.`
+  );
   res
     .status(StatusCodes.OK)
     .json({ message: "Evaluation result approved successfully" });
@@ -416,3 +450,31 @@ const calculateTotalResult = (result) => {
   }
   return total;
 };
+
+export const getEvaluationDataAnalyics = catchAsync(async (req, res, next) => {
+  const evaluationData = [];
+  const thresholds = [90, 80, 70];
+
+  const evaluationTypes = [
+    "byStudent",
+    "byPeer",
+    "byHead",
+    "byDirector",
+    "byDean",
+    "byTeamLeader",
+  ];
+  for (const type of evaluationTypes) {
+    for (const threshold of thresholds) {
+      const query = { [type]: { $gt: threshold } };
+      const count = await FinalResult.countDocuments(query);
+      evaluationData.push({
+        evaluationType: type,
+        threshold: `Above ${threshold}`,
+        count: count,
+      });
+    }
+  }
+  return res
+    .status(StatusCodes.OK)
+    .json({ status: "success", data: evaluationData });
+});

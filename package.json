@@ -22,10 +22,15 @@
     "nodemailer": "^6.9.9",
     "pug": "^3.0.2",
     "sharp": "^0.33.2",
+    "sinon": "^17.0.1",
+    "socket.io": "^4.7.5",
     "validator": "^13.11.0",
+    "ws": "^8.17.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "chai": "^5.1.0",
+    "mocha": "^10.4.0",
     "nodemon": "^3.0.3"
   },
   "name": "evalution_system",
@@ -33,7 +38,9 @@
   "description": "Final Project",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon src/index.js"
+    "start": "nodemon src/index.js",
+    "start-websocket": "node websocket-server.js",
+    "test": "mocha test/*.test.js"
   },
   "author": "",
   "license": "ISC"
