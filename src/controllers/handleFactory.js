@@ -61,12 +61,6 @@ const createOne = (Model) =>
         "Evaluation Schedule Started",
         `Evaluation schedule started from ${startDate} to ${endDate}.`
       );
-      usersToNotify.forEach(async (user) => {
-        await new Email(user, "").notifyTheAvailabilityOfCycle({
-          startDate,
-          endDate,
-        });
-      });
     }
 
     res.status(StatusCodes.CREATED).json({
