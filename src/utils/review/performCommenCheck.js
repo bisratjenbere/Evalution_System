@@ -11,15 +11,6 @@ async function performCommonChecks(req, next, evalType, callback) {
     const endDate = activeCycle.endDate;
     const today = new Date();
 
-    if (!(today >= startDate && today <= endDate)) {
-      return next(
-        new AppError(
-          "Sorry, You are not allowed to give evaluation. Try again when the evaluation starts on",
-          StatusCodes.FORBIDDEN
-        )
-      );
-    }
-
     const query = await buildEvaluationQuery(req, evalType, activeCycle);
 
     const evaluatedUser = await EvaluationResult.findOne(query).populate({

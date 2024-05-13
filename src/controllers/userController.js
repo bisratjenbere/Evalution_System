@@ -185,14 +185,26 @@ export const createUser = catchAsync(async (req, res) => {
     randomePassword = generateRandomPassword(6);
     req.body.password = await hashPassword(randomePassword);
   }
-  console.log(randomePassword);
+
   req.body.department = req.user.department;
 
   req.body.college = req.user.college;
   const newUser = await User.create(req.body);
-  req.body.role &&
-    (await new Email(newUser, null).sendGeneratedPassword(randomePassword));
+  console.log(newUser);
+  if (req.body.role) {
+    try {
+      await new Email(newUser, null).sendGeneratedPassword(randomePassword);
 
+      newUser.role = req.body.role;
+      await newUser.save();
+    } catch (error) {
+      console.error("Error sending email:", error);
+      await User.findByIdAndDelete(newUser._id);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ status: "error", msg: "Failed to send email" });
+    }
+  }
   res
     .status(StatusCodes.CREATED)
     .json({ status: "success", msg: "sucessfully created" });
@@ -228,10 +240,11 @@ export const assignRole = catchAsync(async (req, res, next) => {
     }
 
     const password = generateRandomPassword(6);
+    const generatedPassword = await hashPassword(password);
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { role, password },
+      { role, password: generatedPassword },
       {
         new: true,
         runValidators: true,
