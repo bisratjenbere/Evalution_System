@@ -48,12 +48,16 @@ The goal of this system is to **streamline employee evaluations** and provide a 
 
 ---
 
-## ⚡ Getting Started
-### 1. Clone the Repository
-https://github.com/bisratjenbere/Performance-Apprisal
+## 🚀 Getting Started
+
+### 1. Clone the Repo
+
+```bash
+git clone https://github.com/your-username/performance-appraisal-backend.git
 cd performance-appraisal-backend
+```
 ### 2. Install Dependencies
- npm install
+
 ### 3. Setup Environment Variables
 ### 4. Run the Server
 npm run dev
