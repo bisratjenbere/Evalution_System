@@ -50,7 +50,7 @@ The goal of this system is to **streamline employee evaluations** and provide a 
 
 ## ⚡ Getting Started
 ### 1. Clone the Repository
-git clone https://github.com/bisratjenbere/performance-appraisal-backend.git
+https://github.com/bisratjenbere/Performance-Apprisal
 cd performance-appraisal-backend
 ### 2. Install Dependencies
  npm install
