@@ -8,7 +8,6 @@ const departmentSchema = new mongoose.Schema({
   departmentCode: {
     type: String,
     trim: true,
-    unique: true,
   },
   collegeId: {
     type: mongoose.Schema.Types.ObjectId,

@@ -95,8 +95,6 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.index({ email: 1 });
-
 userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
   this.passwordChangedAt = Date.now() - 1000;
