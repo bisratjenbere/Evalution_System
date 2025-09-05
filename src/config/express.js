@@ -6,7 +6,6 @@ import mongoSanitazer from "express-mongo-sanitize";
 import allRoutes from "./routes.js";
 import cookieParser from "cookie-parser";
 import AppError from "../utils/appError.js";
-import http from "http";
 import errorHandlerMiddleware from "../middleware/errorHandler.js";
 cloudinary.config({
   cloud_name: environments.CLOUD_Name,
@@ -25,14 +24,10 @@ app.use(
 app.use(mongoSanitazer());
 app.use(express.json());
 app.use(helmet());
-
 app.use(cookieParser());
-
 app.use("/api/v1", allRoutes);
-
-app.all("*", (req, res, next) => {
+app.all("*", (req, _, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
-
 app.use(errorHandlerMiddleware);
 export default app;
